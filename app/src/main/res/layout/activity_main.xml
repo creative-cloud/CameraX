@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:fresco="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingTop="30dp"
+            android:text="Hello World!"
+            android:textSize="24sp"
+            android:layout_margin="2dp"
+    />
+
+    <com.facebook.drawee.view.SimpleDraweeView
+            android:id="@+id/my_image_view"
+            android:layout_gravity="center"
+            android:layout_width="400dp"
+            android:layout_height="400dp"
+            fresco:placeholderImage="@drawable/abc_vector_test"
+    />
+
+    <TextureView
+            android:id="@+id/texture_view"
+            android:padding="440dp"
+            android:layout_width="440px"
+            android:layout_height="640px"
+            android:layout_gravity="center"
+            android:visibility="gone"
+    />
+    <Button
+            android:id="@+id/button1"
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="open camera"/>
+
+    <!--<androidx.camera.view.CameraView-->
+            <!--android:id="@+id/view_camera"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+    <!--/>-->
+    <!---->
+
+
+    <!--add simpledraweeview-->
+
+</LinearLayout>
