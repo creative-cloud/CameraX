@@ -13,24 +13,53 @@
             android:layout_gravity="center"
     />
 
-    <Button
-            android:id="@+id/button"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Capture image"
-            android:textAllCaps="false"
+    <ToggleButton
+            android:layout_marginTop="10dp"
+            android:id="@+id/simpleToggleButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
             android:layout_gravity="center"
+            android:layout_centerHorizontal="true"
+            android:textOff="Video"
+            android:textOn="Photo"
     />
 
-    <Button
-            android:id="@+id/button2"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Capture video"
-            android:textAllCaps="false"
-            android:layout_gravity="center"
-    />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:gravity="center"
+    android:layout_marginTop="-15dp"
+    >
 
+        <Button
+                android:id="@+id/button"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Capture image"
+                android:textAllCaps="false"
+                android:layout_gravity="center"
+        />
+
+        <Button
+                android:id="@+id/button2"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Start video"
+                android:textAllCaps="false"
+                android:layout_gravity="center"
+                android:visibility="gone"
+        />
+
+        <Button
+                android:id="@+id/button3"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Stop video"
+                android:textAllCaps="false"
+                android:layout_gravity="center"
+                android:visibility="gone"
+        />
+
+    </LinearLayout>
 
 
 </LinearLayout>

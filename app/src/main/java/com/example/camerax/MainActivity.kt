@@ -36,7 +36,7 @@ import java.io.File
 class MainActivity : AppCompatActivity(){
 
     private val REQUEST_CODE =100
-    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.RECORD_AUDIO) //TODO: add camera permissions
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,8 +55,6 @@ class MainActivity : AppCompatActivity(){
         {
             ActivityCompat.requestPermissions(this,REQUIRED_PERMISSIONS,REQUEST_CODE)
         }
-
-
 
         Clicked.setOnClickListener {
             //add actions for cameraX module
@@ -185,7 +183,7 @@ class MainActivity : AppCompatActivity(){
                 }
             } else {
 //                "Permissions not granted by the user.".toast()
-                Toast.makeText(Activity(),"Permissions not granted by the user",Toast.LENGTH_SHORT)
+//                Toast.makeText(Activity(),"Permissions not granted by the user",Toast.LENGTH_SHORT)
                 finish()
             }
         }
