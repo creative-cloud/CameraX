@@ -36,7 +36,7 @@ import java.io.File
 class MainActivity : AppCompatActivity(){
 
     private val REQUEST_CODE =100
-    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.RECORD_AUDIO) //TODO: add camera permissions
+    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA) //TODO: add camera permissions and record audio
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,15 +126,16 @@ class MainActivity : AppCompatActivity(){
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        var path="test"
-        if(requestCode==REQUEST_CODE)
-        {
-             path= data!!.getStringExtra("path")!!
-//            Log.e("test",path)
-        }
-        Log.v("test", "captured image")
-        var imagePath= "file://$path";
-        my_image_view.setImageURI(imagePath);
+        var path="testing"
+//        path="/storage/emulated/0/Android/media/com.example.camerax/1561620646772.jpg"
+//        if(requestCode==REQUEST_CODE && resultCode== Activity.RESULT_OK)
+//        {
+//             path= data!!.getStringExtra("path")!!
+////            Log.e("test",path)
+//        }
+//        Log.v("test", "captured image")
+//        var imagePath= "file://$path";
+//        my_image_view.setImageURI(imagePath);
     }
 
 
@@ -179,7 +180,7 @@ class MainActivity : AppCompatActivity(){
                 texture_view.post {
                     //startCameraForPreview()
                     val intent = Intent(this, DisplayCameraActivity::class.java)
-                    startActivityForResult(intent,REQUEST_CODE)
+                    startActivity(intent)       //TODO add for result and request code
                 }
             } else {
 //                "Permissions not granted by the user.".toast()

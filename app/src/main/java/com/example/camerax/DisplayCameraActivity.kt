@@ -88,9 +88,9 @@ class DisplayCameraActivity : AppCompatActivity() {
                     val msg = "Photo capture succeeded: ${file.absolutePath}"
 //                    msg.toast()
                     var intent = intent
-                    intent.putExtra("path", file.absolutePath)
+//                    intent.putExtra("path", file.absolutePath)
                     Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
-                    setResult(Activity.RESULT_OK, intent)
+//                    setResult(Activity.RESULT_OK, intent)
                     CameraX.unbind(imageCapture)
                     finish()
                 }
@@ -136,17 +136,21 @@ class DisplayCameraActivity : AppCompatActivity() {
 
         }*/
 
-        toggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+         var my_intent:Intent=intent
+
+        vidtoggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {        //start video-button 2
                 val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
                 CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
+                Log.e("testing","start vid")
                 videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
                     override fun onVideoSaved(file: File?) {
                         val msg = "Video capture succeeded: ${file!!.absolutePath}"
                         Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
-                        var intent: Intent = intent
-                        intent.putExtra("path", file.absolutePath)
-                        setResult(Activity.RESULT_OK, intent)
+//                        var intent: Intent = intent
+//                        intent.putExtra("path", file.absolutePath)
+                        my_intent=intent
+//                        my_intent.putExtra("path",file.absolutePath)
                     }
 
 
@@ -160,7 +164,9 @@ class DisplayCameraActivity : AppCompatActivity() {
                 })
             } else {   //stop video button 3
                 videoCapture.stopRecording()
-                CameraX.unbind(videoCapture)
+//                my_intent.putExtra("path","/storage/emulated/0/Android/media/com.example.camerax/1561626353997.jpg")
+//                    setResult(Activity.RESULT_OK, my_intent)
+//                CameraX.unbind(videoCapture)
                 finish()
             }
         })
