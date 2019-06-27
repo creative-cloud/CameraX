@@ -25,19 +25,25 @@ import android.widget.ToggleButton
 import android.widget.CompoundButton
 import android.R.id.toggle
 import android.opengl.Visibility
+import androidx.lifecycle.LifecycleOwner
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class DisplayCameraActivity : AppCompatActivity() {
 
     private lateinit var toggle: ToggleButton
-    var checker:Int = 0
+    private lateinit var vidtoggle: ToggleButton
+    var checker: Int = 0
+    lateinit var capture: UseCase
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(com.example.camerax.R.layout.display_camera_activity)
         toggle = findViewById<View>(com.example.camerax.R.id.simpleToggleButton) as ToggleButton
-        checker=1
+        vidtoggle = findViewById<View>(com.example.camerax.R.id.vidToggleButton) as ToggleButton
+        vidtoggle.isChecked=false
+        checker = 1
         startCameraForCapture()
 
     }
@@ -45,7 +51,7 @@ class DisplayCameraActivity : AppCompatActivity() {
     @SuppressLint("RestrictedApi")
     private fun startCameraForCapture() {
 
-
+        CameraX.unbindAll()
         val previewConfig = PreviewConfig.Builder().apply {
             setTargetAspectRatio(Rational(1, 1))
             setTargetResolution(Size(400, 640))
@@ -74,6 +80,7 @@ class DisplayCameraActivity : AppCompatActivity() {
         val videoCapture = VideoCapture(videoCaptureConfig)
 
         button.setOnClickListener {
+            CameraX.bindToLifecycle(this,imageCapture)
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
             imageCapture.takePicture(file, object : ImageCapture.OnImageSavedListener {
                 @SuppressLint("RestrictedApi")
@@ -84,6 +91,7 @@ class DisplayCameraActivity : AppCompatActivity() {
                     intent.putExtra("path", file.absolutePath)
                     Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
                     setResult(Activity.RESULT_OK, intent)
+                    CameraX.unbind(imageCapture)
                     finish()
                 }
 
@@ -98,18 +106,18 @@ class DisplayCameraActivity : AppCompatActivity() {
         }
 
 
-        button2!!.setOnClickListener {
+       /* button2!!.setOnClickListener {
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
-
+            CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
             videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
                 override fun onVideoSaved(file: File?) {
                     val msg = "Video capture succeeded: ${file!!.absolutePath}"
-                    var intent = intent
-                    intent.putExtra("path", file.absolutePath)
                     Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
+                    var intent: Intent = intent
+                    intent.putExtra("path", file.absolutePath)
                     setResult(Activity.RESULT_OK, intent)
-                    finish()
                 }
+
 
                 @SuppressLint("RestrictedApi")
                 override fun onError(useCaseError: VideoCapture.UseCaseError, message: String, cause: Throwable?) {
@@ -119,48 +127,86 @@ class DisplayCameraActivity : AppCompatActivity() {
                     cause?.printStackTrace()
                 }
             })
-
         }
 
         button3!!.setOnClickListener {
             videoCapture.stopRecording()
-        }
+            CameraX.unbind(videoCapture)
+            finish()
+
+        }*/
+
+        toggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {        //start video-button 2
+                val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
+                CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
+                videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
+                    override fun onVideoSaved(file: File?) {
+                        val msg = "Video capture succeeded: ${file!!.absolutePath}"
+                        Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
+                        var intent: Intent = intent
+                        intent.putExtra("path", file.absolutePath)
+                        setResult(Activity.RESULT_OK, intent)
+                    }
+
+
+                    @SuppressLint("RestrictedApi")
+                    override fun onError(useCaseError: VideoCapture.UseCaseError, message: String, cause: Throwable?) {
+                        val msg = "Photo capture failed: $message"
+//                    msg.toast()
+                        Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
+                        cause?.printStackTrace()
+                    }
+                })
+            } else {   //stop video button 3
+                videoCapture.stopRecording()
+                CameraX.unbind(videoCapture)
+                finish()
+            }
+        })
+
 
         toggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
                 // The toggle is enabled
 //                CameraX.unbindAll()
 //                CameraX.bindToLifecycle(this, preview, imageCapture) // For Preview and capture
-                checker=0
-                button.visibility=View.VISIBLE
-                button2.visibility = View.GONE;
-                button3.visibility = View.GONE;
-            }
-
-            else {
+                Log.e("TEST", "comes to toggle")
+                checker = 0
+                capture = imageCapture
+                button.visibility = View.VISIBLE
+//                button2.visibility = View.GONE;
+//                button3.visibility = View.GONE;
+                vidtoggle.visibility=View.GONE
+            } else {
                 // The toggle is disabled
 //                CameraX.unbindAll()
 //                CameraX.bindToLifecycle(this, preview, imageCapture)
-                checker=1
-                button2.visibility=View.VISIBLE
-                button3.visibility=View.VISIBLE
+                checker = 1
+                capture = videoCapture
+//                button2.visibility = View.VISIBLE
+//                button3.visibility = View.VISIBLE
+                vidtoggle.visibility=View.VISIBLE
                 button.visibility = View.GONE;
-        }
-        })
+            }
 
-//        CameraX.bindToLifecycle(this, preview,videoCapture)
 
-        if (checker==0) {
+
+            /*if (checker == 0) {
 //            CameraX.unbindAll()
 //            CameraX.bindToLifecycle(this, preview,imageCapture)
-        }
-        else
-        {
+                capture = imageCapture
+//            CameraX.unbind(preview,videoCapture)
+            } else {
 
 //            CameraX.unbindAll()
-            CameraX.bindToLifecycle(this, preview,videoCapture)
-        }
+//            CameraX.bindToLifecycle(this, preview,videoCapture)
+                capture = videoCapture
+//            CameraX.unbind(preview,imageCapture)
+            }*/
 
+        })
+        CameraX.bindToLifecycle(this, preview)
     }
 
 

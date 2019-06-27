@@ -59,6 +59,19 @@
                 android:visibility="gone"
         />
 
+        <ToggleButton
+                android:id="@+id/vidToggleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:checked="true"
+                android:layout_gravity="center"
+                android:layout_centerHorizontal="true"
+                android:textOff="Start Video"
+                android:textOn="Stop Video"
+                android:visibility="gone"
+        />
+
     </LinearLayout>
 
 
