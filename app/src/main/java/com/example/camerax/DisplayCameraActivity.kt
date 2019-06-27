@@ -54,7 +54,7 @@ class DisplayCameraActivity : AppCompatActivity() {
         CameraX.unbindAll()
         val previewConfig = PreviewConfig.Builder().apply {
             setTargetAspectRatio(Rational(1, 1))
-            setTargetResolution(Size(400, 640))
+//            setTargetResolution(Size(400, 640))
         }.build()
 
         val preview = Preview(previewConfig)
@@ -68,8 +68,10 @@ class DisplayCameraActivity : AppCompatActivity() {
         }
 
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
-            setTargetAspectRatio(Rational(1, 1))
+//            setTargetAspectRatio(Rational(1, 1))
             setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+            setLensFacing(CameraX.LensFacing.BACK)
+//            setTargetResolution(Size.parseSize("720p"))
         }.build()
 
         val videoCaptureConfig = VideoCaptureConfig.Builder().apply {
