@@ -8,11 +8,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.graphics.Matrix
+import android.hardware.Camera
 import android.util.Log
 import android.util.Rational
 import android.util.Size
-import android.view.Surface
-import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -20,13 +19,9 @@ import androidx.camera.core.*
 import androidx.camera.core.CameraX.getContext
 import kotlinx.android.synthetic.main.display_camera_activity.*
 import java.io.File
-import android.R
 import android.widget.ToggleButton
 import android.widget.CompoundButton
-import android.R.id.toggle
-import android.opengl.Visibility
 import androidx.lifecycle.LifecycleOwner
-import kotlinx.android.synthetic.main.activity_main.*
 
 
 class DisplayCameraActivity : AppCompatActivity() {
@@ -35,7 +30,7 @@ class DisplayCameraActivity : AppCompatActivity() {
     private lateinit var vidtoggle: ToggleButton
     var checker: Int = 0
     lateinit var capture: UseCase
-
+    var size: Camera.Size? =null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +39,12 @@ class DisplayCameraActivity : AppCompatActivity() {
         vidtoggle = findViewById<View>(com.example.camerax.R.id.vidToggleButton) as ToggleButton
         vidtoggle.isChecked=false
         checker = 1
+        var camera=Camera.open(0)
+        var list = camera.parameters.supportedPreviewSizes
+
+        size=getOptimalPreviewSize(list,5,5)
         startCameraForCapture()
+
 
     }
 
@@ -53,8 +53,8 @@ class DisplayCameraActivity : AppCompatActivity() {
 
         CameraX.unbindAll()
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetAspectRatio(Rational(1, 1))
-//            setTargetResolution(Size(400, 640))
+            setTargetAspectRatio(Rational(4,3))
+            setTargetResolution(Size(size!!.width,size!!.height))
         }.build()
 
         val preview = Preview(previewConfig)
@@ -68,20 +68,21 @@ class DisplayCameraActivity : AppCompatActivity() {
         }
 
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
-//            setTargetAspectRatio(Rational(1, 1))
             setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
             setLensFacing(CameraX.LensFacing.BACK)
-//            setTargetResolution(Size.parseSize("720p"))
+            setTargetResolution(Size(size!!.width,size!!.height))
+
         }.build()
 
         val videoCaptureConfig = VideoCaptureConfig.Builder().apply {
-            setTargetAspectRatio(Rational(1, 1))
+            setTargetResolution(Size(size!!.width,size!!.height))
         }.build()
 
         val imageCapture = ImageCapture(imageCaptureConfig)
         val videoCapture = VideoCapture(videoCaptureConfig)
         var my_intent:Intent=intent
         var path =""
+
         button.setOnClickListener {
             CameraX.bindToLifecycle(this,imageCapture)
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
@@ -110,35 +111,6 @@ class DisplayCameraActivity : AppCompatActivity() {
         }
 
 
-       /* button2!!.setOnClickListener {
-            val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
-            CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
-            videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
-                override fun onVideoSaved(file: File?) {
-                    val msg = "Video capture succeeded: ${file!!.absolutePath}"
-                    Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
-                    var intent: Intent = intent
-                    intent.putExtra("path", file.absolutePath)
-                    setResult(Activity.RESULT_OK, intent)
-                }
-
-
-                @SuppressLint("RestrictedApi")
-                override fun onError(useCaseError: VideoCapture.UseCaseError, message: String, cause: Throwable?) {
-                    val msg = "Photo capture failed: $message"
-//                    msg.toast()
-                    Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
-                    cause?.printStackTrace()
-                }
-            })
-        }
-
-        button3!!.setOnClickListener {
-            videoCapture.stopRecording()
-            CameraX.unbind(videoCapture)
-            finish()
-
-        }*/
 
 
 
@@ -172,8 +144,6 @@ class DisplayCameraActivity : AppCompatActivity() {
                 })
             } else {   //stop video button 3
                 videoCapture.stopRecording()
-//                my_intent.putExtra("path","/storage/emulated/0/Android/media/com.example.camerax/1561626353997.jpg")
-//                CameraX.unbind(videoCapture)
             }
         })
 
@@ -204,18 +174,6 @@ class DisplayCameraActivity : AppCompatActivity() {
 
 
 
-            /*if (checker == 0) {
-//            CameraX.unbindAll()
-//            CameraX.bindToLifecycle(this, preview,imageCapture)
-                capture = imageCapture
-//            CameraX.unbind(preview,videoCapture)
-            } else {
-
-//            CameraX.unbindAll()
-//            CameraX.bindToLifecycle(this, preview,videoCapture)
-                capture = videoCapture
-//            CameraX.unbind(preview,imageCapture)
-            }*/
 
         })
         CameraX.bindToLifecycle(this, preview)
@@ -229,20 +187,39 @@ class DisplayCameraActivity : AppCompatActivity() {
         val centerX = textureView.width / 2f
         val centerY = textureView.height / 2f
 
-        // Correct preview output to account for display rotation
-//        val rotationDegree=when(textureView.display.rotation){
-//            Surface.ROTATION_0 -> 0
-//            Surface.ROTATION_90 -> 90
-//            Surface.ROTATION_180 -> 180
-//            Surface.ROTATION_270 -> 270
-//            else -> return
-//        }
-//
-//        matrix.postRotate(rotationDegree.toFloat(),centerX,centerY)
-//        matrix.postRotate(0 as Float,centerX,centerY)
-
-        // Finally, apply transformations to our TextureView
         textureView.setTransform(matrix)
+    }
+
+    private fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int, h: Int): Camera.Size? {
+        Log.e("test", " $sizes")
+        val ASPECT_TOLERANCE = 0.1
+        val targetRatio = h.toDouble() / w
+
+        if (sizes == null) return null
+
+        var optimalSize: Camera.Size? = null
+        var minDiff = java.lang.Double.MAX_VALUE
+
+        for (size in sizes) {
+            val ratio = size.width.toDouble() / size.height
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue
+            if (Math.abs(size.height - h) < minDiff) {
+                optimalSize = size
+                minDiff = Math.abs(size.height - h).toDouble()
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = java.lang.Double.MAX_VALUE
+            for (size in sizes) {
+                if (Math.abs(size.height - h) < minDiff) {
+                    optimalSize = size
+                    minDiff = Math.abs(size.height - h).toDouble()
+                }
+            }
+        }
+        Log.e("" + optimalSize!!.height, "" + optimalSize!!.width)
+        return optimalSize
     }
 
 }
