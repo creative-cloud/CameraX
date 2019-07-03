@@ -1,11 +1,6 @@
 package com.example.camerax
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.annotation.TargetApi
-import android.app.Activity
-import android.app.Application
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -14,23 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Camera
-import android.graphics.Matrix
-import android.os.Build
-import android.util.Rational
-import android.util.Size
-import android.view.Surface
-import android.view.ViewGroup
-import android.widget.Toast
-import androidx.camera.core.*
-import androidx.camera.core.CameraX.getContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.drawee.backends.pipeline.Fresco
-import com.facebook.drawee.view.SimpleDraweeView
-import java.io.File
-
-//import com.android.example.cameraxbasic.utils.FLAGS_FULLSCREEN
 
 
 class MainActivity : AppCompatActivity(){

@@ -4,14 +4,21 @@ import androidx.camera.core.CameraX
 import androidx.camera.core.ImageCapture
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.graphics.ImageFormat
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.graphics.Matrix
+import android.graphics.Point
 import android.hardware.Camera
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.icu.util.Measure
 import android.util.Log
 import android.util.Rational
 import android.util.Size
+import android.view.Display
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -22,29 +29,46 @@ import java.io.File
 import android.widget.ToggleButton
 import android.widget.CompoundButton
 import androidx.lifecycle.LifecycleOwner
+//import com.sun.imageio.plugins.jpeg.JPEG
 
 
 class DisplayCameraActivity : AppCompatActivity() {
 
     private lateinit var toggle: ToggleButton
     private lateinit var vidtoggle: ToggleButton
-    var checker: Int = 0
+//    var checker: Int = 0
     lateinit var capture: UseCase
-    var size: Camera.Size? =null
+    var size: Camera.Size? = null
+    var imageSize: Size? = null
+//    var videoSize: Size? = null
+    var jpegSizes: Array<Size>? = null
+    var width=0
+    var height=0
+//    var mp4Sizes: Array<Size>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(com.example.camerax.R.layout.display_camera_activity)
         toggle = findViewById<View>(com.example.camerax.R.id.simpleToggleButton) as ToggleButton
         vidtoggle = findViewById<View>(com.example.camerax.R.id.vidToggleButton) as ToggleButton
-        vidtoggle.isChecked=false
-        checker = 1
-        var camera=Camera.open(0)
-        var list = camera.parameters.supportedPreviewSizes
+        vidtoggle.isChecked = false
+        test()  //get sizes  TODO: rename
 
-        size=getOptimalPreviewSize(list,5,5)
         startCameraForCapture()
 
+    }
+
+    private fun test() {
+        val cm: CameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val cc = cm.getCameraCharacteristics(0.toString())
+        val streamConfigs = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        jpegSizes = streamConfigs!!.getOutputSizes(ImageFormat.JPEG)
+        val display = windowManager.defaultDisplay
+        val size = Point()
+        display.getSize(size)
+        width = size.x
+        height = size.y
+        imageSize = getOptimalPreviewSize2(jpegSizes,width, height)
 
     }
 
@@ -53,8 +77,9 @@ class DisplayCameraActivity : AppCompatActivity() {
 
         CameraX.unbindAll()
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetAspectRatio(Rational(4,3))
-            setTargetResolution(Size(size!!.width,size!!.height))
+            setTargetAspectRatio(Rational(4, 3))
+            setTargetResolution(Size(imageSize!!.width, imageSize!!.height))
+            Log.e("" + imageSize!!.height, "" + imageSize!!.width)
         }.build()
 
         val preview = Preview(previewConfig)
@@ -70,29 +95,30 @@ class DisplayCameraActivity : AppCompatActivity() {
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
             setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
             setLensFacing(CameraX.LensFacing.BACK)
-            setTargetResolution(Size(size!!.width,size!!.height))
+            Log.e("" + imageSize!!.height, "" + imageSize!!.width)
+            setTargetResolution(Size(imageSize!!.width, imageSize!!.height))
 
         }.build()
 
         val videoCaptureConfig = VideoCaptureConfig.Builder().apply {
-            setTargetResolution(Size(size!!.width,size!!.height))
+            Log.e("" + imageSize!!.height, "" + imageSize!!.width)
+            setTargetResolution(Size(imageSize!!.width, imageSize!!.height))
         }.build()
 
         val imageCapture = ImageCapture(imageCaptureConfig)
         val videoCapture = VideoCapture(videoCaptureConfig)
-        var my_intent:Intent=intent
-        var path =""
+        var my_intent: Intent = intent
+        var path = ""
 
         button.setOnClickListener {
-            CameraX.bindToLifecycle(this,imageCapture)
+            CameraX.bindToLifecycle(this, imageCapture)
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
             imageCapture.takePicture(file, object : ImageCapture.OnImageSavedListener {
                 @SuppressLint("RestrictedApi")
                 override fun onImageSaved(file: File) {
                     val msg = "Photo capture succeeded: ${file.absolutePath}"
-//                    msg.toast()
                     var intent = intent
-                    path=file.absolutePath
+                    path = file.absolutePath
                     intent.putExtra("path", path)
                     Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
                     setResult(Activity.RESULT_OK, my_intent)
@@ -103,7 +129,6 @@ class DisplayCameraActivity : AppCompatActivity() {
                 @SuppressLint("RestrictedApi")
                 override fun onError(useCaseError: ImageCapture.UseCaseError, message: String, cause: Throwable?) {
                     val msg = "Photo capture failed: $message"
-//                    msg.toast()
                     Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show()
                     cause?.printStackTrace()
                 }
@@ -118,31 +143,27 @@ class DisplayCameraActivity : AppCompatActivity() {
             if (isChecked) {        //start video-button 2
                 val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
                 CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
-                Log.e("testing","start vid")
+                Log.e("testing", "start vid")
                 videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
                     override fun onVideoSaved(file: File?) {
                         val msg = "Video capture succeeded: ${file!!.absolutePath}"
                         Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
-//                        var intent: Intent = intent
-//                        intent.putExtra("path", file.absolutePath)
-                        my_intent=intent
-                        path=file.absolutePath
-                        my_intent.putExtra("path",path)
+                        my_intent = intent
+                        path = file.absolutePath
+                        my_intent.putExtra("path", path)
                         setResult(Activity.RESULT_OK, my_intent)
                         finish()
-//                        my_intent.putExtra("path",file.absolutePath)
                     }
 
 
                     @SuppressLint("RestrictedApi")
                     override fun onError(useCaseError: VideoCapture.UseCaseError, message: String, cause: Throwable?) {
                         val msg = "Photo capture failed: $message"
-//                    msg.toast()
                         Toast.makeText(CameraX.getContext(), msg, Toast.LENGTH_SHORT).show()
                         cause?.printStackTrace()
                     }
                 })
-            } else {   //stop video button 3
+            } else {
                 videoCapture.stopRecording()
             }
         })
@@ -150,29 +171,19 @@ class DisplayCameraActivity : AppCompatActivity() {
 
         toggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
-                // The toggle is enabled
-//                CameraX.unbindAll()
-//                CameraX.bindToLifecycle(this, preview, imageCapture) // For Preview and capture
                 Log.e("TEST", "comes to toggle")
-                checker = 0
+//                checker = 0
                 capture = imageCapture
                 button.visibility = View.VISIBLE
-//                button2.visibility = View.GONE;
-//                button3.visibility = View.GONE;
-                vidtoggle.visibility=View.GONE
+                vidtoggle.visibility = View.GONE
             } else {
-                // The toggle is disabled
-//                CameraX.unbindAll()
-//                CameraX.bindToLifecycle(this, preview, imageCapture)
-                checker = 1
+//                checker = 1
                 capture = videoCapture
 //                button2.visibility = View.VISIBLE
 //                button3.visibility = View.VISIBLE
-                vidtoggle.visibility=View.VISIBLE
-                button.visibility = View.GONE;
+                vidtoggle.visibility = View.VISIBLE
+                button.visibility = View.GONE
             }
-
-
 
 
         })
@@ -190,7 +201,7 @@ class DisplayCameraActivity : AppCompatActivity() {
         textureView.setTransform(matrix)
     }
 
-    private fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int, h: Int): Camera.Size? {
+    /*private fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int, h: Int): Camera.Size? {
         Log.e("test", " $sizes")
         val ASPECT_TOLERANCE = 0.1
         val targetRatio = h.toDouble() / w
@@ -219,6 +230,36 @@ class DisplayCameraActivity : AppCompatActivity() {
             }
         }
         Log.e("" + optimalSize!!.height, "" + optimalSize!!.width)
+        return optimalSize
+    }*/
+    private fun getOptimalPreviewSize2(sizes: Array<Size>?, w: Int, h: Int): Size? {
+        Log.e("test", " $sizes")
+        val ASPECT_TOLERANCE = 0.1
+        val targetRatio = h.toDouble() / w
+
+        if (sizes == null) return null
+
+        var optimalSize: Size? = null
+        var minDiff = java.lang.Double.MAX_VALUE
+
+        for (size in sizes) {
+            val ratio = size.width.toDouble() / size.height
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue
+            if (Math.abs(size.height - h) < minDiff) {
+                optimalSize = size
+                minDiff = Math.abs(size.height - h).toDouble()
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = java.lang.Double.MAX_VALUE
+            for (size in sizes) {
+                if (Math.abs(size.height - h) < minDiff) {
+                    optimalSize = size
+                    minDiff = Math.abs(size.height - h).toDouble()
+                }
+            }
+        }
         return optimalSize
     }
 
