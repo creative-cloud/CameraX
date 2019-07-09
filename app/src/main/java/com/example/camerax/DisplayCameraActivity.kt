@@ -11,14 +11,11 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.graphics.Matrix
 import android.graphics.Point
-import android.hardware.Camera
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
-import android.icu.util.Measure
 import android.util.Log
 import android.util.Rational
 import android.util.Size
-import android.view.Display
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -29,22 +26,17 @@ import java.io.File
 import android.widget.ToggleButton
 import android.widget.CompoundButton
 import androidx.lifecycle.LifecycleOwner
-//import com.sun.imageio.plugins.jpeg.JPEG
 
 
 class DisplayCameraActivity : AppCompatActivity() {
 
     private lateinit var toggle: ToggleButton
     private lateinit var vidtoggle: ToggleButton
-//    var checker: Int = 0
     lateinit var capture: UseCase
-    var size: Camera.Size? = null
     var imageSize: Size? = null
-//    var videoSize: Size? = null
     var jpegSizes: Array<Size>? = null
-    var width=0
-    var height=0
-//    var mp4Sizes: Array<Size>? = null
+    var width = 0
+    var height = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,13 +44,12 @@ class DisplayCameraActivity : AppCompatActivity() {
         toggle = findViewById<View>(com.example.camerax.R.id.simpleToggleButton) as ToggleButton
         vidtoggle = findViewById<View>(com.example.camerax.R.id.vidToggleButton) as ToggleButton
         vidtoggle.isChecked = false
-        test()  //get sizes  TODO: rename
-
+        getDisplaySize()
         startCameraForCapture()
 
     }
 
-    private fun test() {
+    private fun getDisplaySize() {
         val cm: CameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val cc = cm.getCameraCharacteristics(0.toString())
         val streamConfigs = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
@@ -68,7 +59,7 @@ class DisplayCameraActivity : AppCompatActivity() {
         display.getSize(size)
         width = size.x
         height = size.y
-        imageSize = getOptimalPreviewSize2(jpegSizes,width, height)
+        imageSize = getOptimalPreviewSize(jpegSizes, width, height)
 
     }
 
@@ -140,8 +131,9 @@ class DisplayCameraActivity : AppCompatActivity() {
 
 
         vidtoggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {        //start video-button 2
+            if (isChecked) {        //start video-button
                 val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.mp4")
+                var filePath:String=" "
                 CameraX.bindToLifecycle(this as LifecycleOwner, videoCapture)
                 Log.e("testing", "start vid")
                 videoCapture.startRecording(file, object : VideoCapture.OnVideoSavedListener {
@@ -151,10 +143,19 @@ class DisplayCameraActivity : AppCompatActivity() {
                         my_intent = intent
                         path = file.absolutePath
                         my_intent.putExtra("path", path)
+
+                        //COMPRESSION
+//                        thread(start = true) {
+//                            println("running from thread(): ${Thread.currentThread()}")
+//                             filePath = SiliCompressor.with(applicationContext)
+//                                .compressVideo(path, "/storage/emulated/0/Android/media/com.example.camerax/",480,320,450000)
+//                        }
+
+                        Log.e("Compressed", filePath)
                         setResult(Activity.RESULT_OK, my_intent)
                         finish()
-                    }
 
+                    }
 
                     @SuppressLint("RestrictedApi")
                     override fun onError(useCaseError: VideoCapture.UseCaseError, message: String, cause: Throwable?) {
@@ -172,19 +173,14 @@ class DisplayCameraActivity : AppCompatActivity() {
         toggle.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
                 Log.e("TEST", "comes to toggle")
-//                checker = 0
                 capture = imageCapture
                 button.visibility = View.VISIBLE
                 vidtoggle.visibility = View.GONE
             } else {
-//                checker = 1
                 capture = videoCapture
-//                button2.visibility = View.VISIBLE
-//                button3.visibility = View.VISIBLE
                 vidtoggle.visibility = View.VISIBLE
                 button.visibility = View.GONE
             }
-
 
         })
         CameraX.bindToLifecycle(this, preview)
@@ -201,39 +197,8 @@ class DisplayCameraActivity : AppCompatActivity() {
         textureView.setTransform(matrix)
     }
 
-    /*private fun getOptimalPreviewSize(sizes: List<Camera.Size>?, w: Int, h: Int): Camera.Size? {
-        Log.e("test", " $sizes")
-        val ASPECT_TOLERANCE = 0.1
-        val targetRatio = h.toDouble() / w
-
-        if (sizes == null) return null
-
-        var optimalSize: Camera.Size? = null
-        var minDiff = java.lang.Double.MAX_VALUE
-
-        for (size in sizes) {
-            val ratio = size.width.toDouble() / size.height
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue
-            if (Math.abs(size.height - h) < minDiff) {
-                optimalSize = size
-                minDiff = Math.abs(size.height - h).toDouble()
-            }
-        }
-
-        if (optimalSize == null) {
-            minDiff = java.lang.Double.MAX_VALUE
-            for (size in sizes) {
-                if (Math.abs(size.height - h) < minDiff) {
-                    optimalSize = size
-                    minDiff = Math.abs(size.height - h).toDouble()
-                }
-            }
-        }
-        Log.e("" + optimalSize!!.height, "" + optimalSize!!.width)
-        return optimalSize
-    }*/
-    private fun getOptimalPreviewSize2(sizes: Array<Size>?, w: Int, h: Int): Size? {
-        Log.e("test", " $sizes")
+    private fun getOptimalPreviewSize(sizes: Array<Size>?, w: Int, h: Int): Size? {
+        Log.e("getDisplaySize", " $sizes")
         val ASPECT_TOLERANCE = 0.1
         val targetRatio = h.toDouble() / w
 
